@@ -8,6 +8,7 @@ import sys
 import zipfile
 import argparse
 
+from pathlib import Path
 from typing import List, Optional
 
 try:
@@ -118,38 +119,27 @@ def main() -> None:
                         help=argparse.SUPPRESS)
 
     args = parser.parse_args()
-    platforms = args.platform
+    platforms = args.platform if args.platform else [PLATFORM_WINDOWS, PLATFORM_LINUX, PLATFORM_MACOS]
     skip_build = args.skip_build
 
-    if not platforms:
-        platforms = [PLATFORM_WINDOWS, PLATFORM_MACOS, PLATFORM_LINUX]
-
-    if os.path.exists("release"):
+    if Path("release").exists():
         print(Fore.BLUE + Style.DIM +
               "Cleaning old release packages (release/)..." + Style.RESET_ALL)
         shutil.rmtree("release")
+    Path("release").mkdir()
 
-    os.mkdir("release")
+    build_funcs = {
+        PLATFORM_WINDOWS: build_windows,
+        PLATFORM_LINUX: build_linux,
+        PLATFORM_LINUX_ARM64: build_linux_arm64,
+        PLATFORM_MACOS: build_macos
+    }
 
-    if PLATFORM_WINDOWS in platforms:
+    for platform in platforms:
         if not skip_build:
             wipe_bin()
-        build_windows(skip_build)
-
-    if PLATFORM_LINUX in platforms:
-        if not skip_build:
-            wipe_bin()
-        build_linux(skip_build)
-
-    if PLATFORM_LINUX_ARM64 in platforms:
-        if not skip_build:
-            wipe_bin()
-        build_linux_arm64(skip_build)
-
-    if PLATFORM_MACOS in platforms:
-        if not skip_build:
-            wipe_bin()
-        build_macos(skip_build)
+        build_func = build_funcs.get(platform, "Invalid platform")
+        build_func(skip_build)
 
 
 def wipe_bin():
