@@ -42,7 +42,7 @@ def update_submodules():
     Updates all submodules.
     """
 
-    if os.path.isfile("DISABLE_SUBMODULE_AUTOUPDATE"):
+    if Path("DISABLE_SUBMODULE_AUTOUPDATE").is_file():
         return
 
     # If the status doesn't match, force VS to reload the solution.
@@ -62,14 +62,14 @@ def install_hooks():
     """
 
     # Read version file.
-    if os.path.isfile("INSTALLED_HOOKS_VERSION"):
-        with open("INSTALLED_HOOKS_VERSION", "r") as f:
+    if Path("INSTALLED_HOOKS_VERSION").is_file():
+        with Path("INSTALLED_HOOKS_VERSION").open("r") as f:
             if f.read() == CURRENT_HOOKS_VERSION:
                 if not QUIET:
                     print("No hooks change detected.")
-                return
+                #return
 
-    with open("INSTALLED_HOOKS_VERSION", "w") as f:
+    with Path("INSTALLED_HOOKS_VERSION").open("w") as f:
         f.write(CURRENT_HOOKS_VERSION)
 
     print("Hooks need updating.")
@@ -78,13 +78,12 @@ def install_hooks():
     hooks_source_dir = Path("hooks")
 
     # Clear entire tree since we need to kill deleted files too.
-    for filename in os.listdir(str(hooks_target_dir)):
-        os.remove(str(hooks_target_dir/filename))
+    for file in hooks_target_dir.iterdir():
+        file.unlink()
 
-    for filename in os.listdir(str(hooks_source_dir)):
-        print("Copying hook {}".format(filename))
-        shutil.copy2(str(hooks_source_dir/filename),
-                        str(hooks_target_dir/filename))
+    for file in hooks_source_dir.iterdir():
+        print("Copying hook {}".format(file.name))
+        shutil.copy2(file, hooks_target_dir/file.name)
 
 
 def reset_solution():
